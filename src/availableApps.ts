@@ -74,6 +74,22 @@ export const availableApps: Listing[] = [
     ],
   },
   {
+    name: 'Markbook',
+    tagline: 'Private bookmarking',
+    launchUrl: 'https://michielbdejong.github.io/markbook/',
+    requirements: [
+      {
+        podWidePermissions: [],
+      },
+      {
+        forClass: 'http://www.w3.org/2002/01/bookmark#Bookmark',
+        requiredModes: [acl.Read, acl.Append, acl.Write],
+        defaultFilename: 'bookmarks',
+        public: true,
+      },
+    ],
+  },
+  {
     name: 'Generator demo',
     tagline: 'Output of inrupt\'s generator for Solid React Applications',
     launchUrl: 'https://generator.inrupt.com/',
