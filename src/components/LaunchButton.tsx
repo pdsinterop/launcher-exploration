@@ -26,9 +26,12 @@ export const LaunchButton: React.FC<Props> = (props) => {
   }
 
   const connectAndLaunch = async (listing: Listing) => {
-    const session = await SolidAuth.popupLogin({ popupUri: 'popup.html' })
-    if (session.webId) {
+    const session = await SolidAuth.login('https://server')
+    if ((session as any).webId) {
+      console.log('Logged in as', (session as any).webId)
       return launch(listing);
+    } else {
+      console.log('Login failed.')
     }
   };
   const launch = async (listing: Listing) => {

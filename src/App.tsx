@@ -37,7 +37,7 @@ const App: React.FC = () => {
               Solid apps
             </Typography>
             <LoggedOut>
-              <Button color="inherit" onClick={() => SolidAuth.popupLogin({ popupUri: 'popup.html' })}>Log in</Button>
+              <Button color="inherit" onClick={() => SolidAuth.login('https://server')}>Log in</Button>
             </LoggedOut>
             <LoggedIn>
               <Button color="inherit" onClick={() => SolidAuth.logout()}>Log out</Button>
