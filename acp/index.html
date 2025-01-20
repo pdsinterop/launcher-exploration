@@ -1,0 +1,58 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Solid App</title>
+  </head>
+  <body>
+    <p>URL to access: <input value="https://michielbdejong.solidcommunity.net/private/" id="testUrl" style="width: 500;">
+      <input type="submit" value="Test" onclick="test();"></p>
+    <p>Status: <span id="testStatus"></span></p>
+    <p>Your WebID provider: <input value="https://solidcommunity.net" id="oidcIssuer" style="width: 300;"> (or https://broker.inrupt.com or https://localhost:8443 etc). <input type="submit" value="Check" onclick="check();"></p>
+    <p>Logged in: <span id="loginStatus"></span></p>
+    <p><a href="https://github.com/michielbdejong/empty-solid-app">Fork me on GitHub!</a></p>
+  </body>
+  <script type="text/javascript" src="/solid-client-authn.bundle.js"></script>
+  <script>
+    let session, sessionInfo;
+    async function getSessionAndInfo() {
+      if (sessionInfo?.isLoggedIn) {
+        return;
+      }
+      session = new solidClientAuthentication.Session();
+      sessionInfo = await session.handleIncomingRedirect();
+    }
+
+    async function test () {
+      await getSessionAndInfo();
+      const testUrl = document.getElementById('testUrl').value;
+      if(sessionInfo.isLoggedIn) {
+        document.getElementById('loginStatus').innerText += `Logged in as ${sessionInfo.webId}`;
+      } else {
+        document.getElementById('loginStatus').innerText += 'you are not logged in';
+      }
+      document.getElementById('testStatus').innerText = `Testing access to ${testUrl} using inrupt-solid-client-auth-js:`;
+      const result = await session.fetch(testUrl);
+      document.getElementById('testStatus').innerText += ` ${result.status}`;
+    }
+
+    async function check () {
+      await getSessionAndInfo();
+      const oidcIssuer = document.getElementById('oidcIssuer').value;
+      
+      if(sessionInfo.isLoggedIn) {
+        document.getElementById('loginStatus').innerText += `Logged in as ${sessionInfo.webId}`;
+      } else {
+        document.getElementById('loginStatus').innerText += 'you are not logged in';
+        document.getElementById('loginStatus').innerText += ` -> logging in using ${oidcIssuer}!`;
+        // Give the user time to read that before the redirect:
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const params = {
+          // redirectUrl: 'https://evil.com', // window.location.origin,
+          oidcIssuer: document.getElementById("oidcIssuer").value,
+        };
+        console.log("logging in", params);
+        session.login(params);
+      }
+    }
+  </script>
+</html>
