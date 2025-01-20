@@ -1,58 +1,75 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Solid App</title>
+    <title>Solid App Launcher</title>
   </head>
   <body>
-    <p>URL to access: <input value="https://michielbdejong.solidcommunity.net/private/" id="testUrl" style="width: 500;">
-      <input type="submit" value="Test" onclick="test();"></p>
-    <p>Status: <span id="testStatus"></span></p>
-    <p>Your WebID provider: <input value="https://solidcommunity.net" id="oidcIssuer" style="width: 300;"> (or https://broker.inrupt.com or https://localhost:8443 etc). <input type="submit" value="Check" onclick="check();"></p>
-    <p>Logged in: <span id="loginStatus"></span></p>
-    <p><a href="https://github.com/michielbdejong/empty-solid-app">Fork me on GitHub!</a></p>
+    <div id="login">
+      <p>Your WebID provider: <input value="https://solidcommunity.net" id="oidcIssuer" style="width: 300;"> <input type="submit" value="Connect" onclick="connect();">
+    </div>
+    <div id="logged-in">
+      <p>
+        <span id="loginStatus" />
+        <input type="submit" value="Disconnect" onclick="disconnect();">
+      </p>
+      <h2>Bookmark apps</h2>
+      <ul id ="app-list" >
+      <p><a href="https://github.com/pdsinterop/launcher-exploration">Fork me on GitHub!</a></p>
+    </div>
   </body>
   <script type="text/javascript" src="/solid-client-authn.bundle.js"></script>
-  <script>
-    let session, sessionInfo;
-    async function getSessionAndInfo() {
-      if (sessionInfo?.isLoggedIn) {
-        return;
-      }
-      session = new solidClientAuthentication.Session();
-      sessionInfo = await session.handleIncomingRedirect();
+  <script>    
+    const session = new solidClientAuthentication.Session();
+    const clientDocs = [ // TODO: fetch these from Solid-OIDC client docs
+      { launch: 'https://markbook.pondersource.com', name: 'MarkBook' },
+      { launch: 'https://poddit.pondersource.com', name: 'Poddit' },
+    ];
+    async function connect () {
+      const params = {
+        // redirectUrl: 'https://evil.com', // window.location.origin,
+        oidcIssuer: document.getElementById("oidcIssuer").value,
+      };
+      console.log("logging in", params);
+      await session.login(params);
+      console.log("unreachable because of redirect?");
     }
-
-    async function test () {
-      await getSessionAndInfo();
-      const testUrl = document.getElementById('testUrl').value;
+    async function disconnect () {
+      await session.logout();
+      await renderLoginStatus();
+    }
+    async function renderAppActions() {
+      console.log('rendering app actions');
+      // const acr = await session.fetch('http://localhost:3000/asdf/bookmarks.acr');
+      // console.log(acr);
+      clientDocs.forEach(doc => {
+        const elt = document.createElement("li");
+        elt.innerHTML = doc.name;
+        const input = document.createElement("input");
+        input.setAttribute('type', 'submit');
+        input.setAttribute('value', 'Launch');
+        input.onclick = function() {
+          window.location = doc.launch;
+        }
+        elt.appendChild(input);
+        document.getElementById('app-list').appendChild(elt);
+      });
+    }
+    async function renderLoginStatus() {
+      const sessionInfo = await session.handleIncomingRedirect();
       if(sessionInfo.isLoggedIn) {
+        console.log('logged in');
+        document.getElementById('logged-in').style.display='block';
+        document.getElementById('login').style.display='none';
         document.getElementById('loginStatus').innerText += `Logged in as ${sessionInfo.webId}`;
+        return renderAppActions();
       } else {
-        document.getElementById('loginStatus').innerText += 'you are not logged in';
-      }
-      document.getElementById('testStatus').innerText = `Testing access to ${testUrl} using inrupt-solid-client-auth-js:`;
-      const result = await session.fetch(testUrl);
-      document.getElementById('testStatus').innerText += ` ${result.status}`;
-    }
-
-    async function check () {
-      await getSessionAndInfo();
-      const oidcIssuer = document.getElementById('oidcIssuer').value;
-      
-      if(sessionInfo.isLoggedIn) {
-        document.getElementById('loginStatus').innerText += `Logged in as ${sessionInfo.webId}`;
-      } else {
-        document.getElementById('loginStatus').innerText += 'you are not logged in';
-        document.getElementById('loginStatus').innerText += ` -> logging in using ${oidcIssuer}!`;
-        // Give the user time to read that before the redirect:
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const params = {
-          // redirectUrl: 'https://evil.com', // window.location.origin,
-          oidcIssuer: document.getElementById("oidcIssuer").value,
-        };
-        console.log("logging in", params);
-        session.login(params);
+        console.log('logged out');
+        document.getElementById('login').style.display='block';
+        document.getElementById('logged-in').style.display='none';
       }
     }
+    window.onload = async (event) => {
+      renderLoginStatus();
+    };
   </script>
 </html>
