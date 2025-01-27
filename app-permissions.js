@@ -32,10 +32,62 @@ class AppInstaller {
       }
     });
     const things = await res.json();
-    console.log(things);
+    const typeRegistrations = things.filter(x => (x['@type'].indexOf('http://www.w3.org/ns/solid/terms#TypeRegistration') !== -1));
+    const matching = typeRegistrations.filter(x => {
+      const classes = x['http://www.w3.org/ns/solid/terms#forClass'];
+      for (let i = 0; i < classes.length; i++) {
+        if (classes[i]['@id'] === rdfClass) {
+          return true;
+        }
+      }
+      return false;
+    });
+    let instances = [];
+    let instanceContainers = [];
+    matching.forEach(entry => {
+      if (Array.isArray(entry['http://www.w3.org/ns/solid/terms#instance'])) {
+        for (let i = 0; i < entry['http://www.w3.org/ns/solid/terms#instance'].length; i++) {
+          instances.push(entry['http://www.w3.org/ns/solid/terms#instance'][i]['@id']);
+        }
+      }
+      if (Array.isArray(entry['http://www.w3.org/ns/solid/terms#instanceContainer'])) {
+        for (let i = 0; i < entry['http://www.w3.org/ns/solid/terms#instanceContainer'].length; i++) {
+          instanceContainers.push(entry['http://www.w3.org/ns/solid/terms#instanceContainer'][i]['@id']);
+        }
+      }
+    })
+    return { instances, instanceContainers };
+  }
+  async getInstancesAndContainers(rdfClass) {
+    const typeIndexes = await this.getTypeIndexes();
+    let instances = [];
+    let instanceContainers = [];
+    const promises = typeIndexes.map(async ti => {
+      const result = await this.getRegistrations(ti, rdfClass);
+      instances = instances.concat(result.instances);
+      instanceContainers = instances.concat(result.instanceContainers);
+    });
+    await Promise.all(promises);
+    return { instances, instanceContainers };
+  }
+  async editAcr(appId, acr) {
+    const read = await this.fetch(acr, {
+      'headers': {
+        'Accept': 'application/ld+json'
+      }
+    });
+    const authorizations = await read.json();
+    console.log(authorizations, `let's add ${appId} here!`);
+  }
+  async installApp(appId, rdfClass) {
+    const {instances, instanceContainers } = await this.getInstancesAndContainers(rdfClass);
+    const instancePromises = instances.map(instance => this.editAcr(appId, `${instance}.acr`)); // FIXME: don't make assumptions about ACR location
+    const instanceContainerPromises = instanceContainers.map(instanceContainer => this.editAcr(appId, `${instanceContainer}.acr`)); // FIXME: don't make assumptions about ACR location
+    await Promise.all(instancePromises.concat(instanceContainerPromises));
   }
 }
 
 // const x = await session.fetch('https://asdf.pivot.pondersource.com/settings/publicTypeIndex.ttl', { headers: { Accept: 'application/ld+json' }});
+// const x = await session.fetch('https://asdf.pivot.pondersource.com/settings/publicTypeIndex.ttl');
 // const things = await x.json();
 // console.log(things);
