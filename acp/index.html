@@ -5,25 +5,40 @@
   </head>
   <body>
     <div id="login">
-      <p>Your WebID provider: <input value="https://solidcommunity.net" id="oidcIssuer" style="width: 300;"> <input type="submit" value="Connect" onclick="connect();">
+      <p>
+        Your WebID provider: <input value="https://solidcommunity.net" id="oidcIssuer" style="width: 300;">
+        <input type="submit" value="Connect" onclick="connect();">
+      </p>
     </div>
     <div id="logged-in">
       <p>
+        <input type="submit" value="Disconnect" onclick="disconnect();" />
         <span id="loginStatus" />
-        <input type="submit" value="Disconnect" onclick="disconnect();">
       </p>
-      <h2>Bookmark apps</h2>
-      <ul id ="app-list" >
-      <p><a href="https://github.com/pdsinterop/launcher-exploration">Fork me on GitHub!</a></p>
+      <div>
+        <h2>Bookmark apps</h2>
+        <p>
+          <ul id ="app-list" />
+        </p>
+      </div>
     </div>
+    <p>
+      <a href="https://github.com/pdsinterop/launcher-exploration">Fork me on GitHub!</a>
+    </p>
   </body>
   <script type="text/javascript" src="/solid-client-authn.bundle.js"></script>
   <script>    
     const session = new solidClientAuthentication.Session();
-    const clientDocs = [ // TODO: fetch these from Solid-OIDC client docs
-      { launch: 'https://markbook.pondersource.com', name: 'MarkBook' },
-      { launch: 'https://poddit.pondersource.com', name: 'Poddit' },
+    const appIds = [ 
+      'https://poddit.app/clientid.jsonld',
     ];
+    function install(appId) {
+      console.log('install', appId);
+    };
+    function launch(appId) {
+      console.log('launch', appId);
+      window.location = data.redirect_uris[0]; // FIXME: does this doc have some
+    };
     async function connect () {
       const params = {
         // redirectUrl: 'https://evil.com', // window.location.origin,
@@ -37,39 +52,45 @@
       await session.logout();
       await renderLoginStatus();
     }
-    async function renderAppActions() {
+    function capitalizeFirstLetter(val) {
+      return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+    }
+    async function renderAppActions(loggedIn) {
       console.log('rendering app actions');
       // const acr = await session.fetch('http://localhost:3000/asdf/bookmarks.acr');
       // console.log(acr);
-      clientDocs.forEach(doc => {
-        const elt = document.createElement("li");
-        elt.innerHTML = doc.name;
-        const input = document.createElement("input");
+      const promises = appIds.map(async appId => {
+        const res = await fetch(appId);
+        const data = await res.json();
+        const li = document.createElement('li');
+        const input = document.createElement('input');
+        let action;
+        const installed = false;
+        action = (installed ? 'launch' : 'install');
+        input.setAttribute('value', `${capitalizeFirstLetter(action)} ${data.client_name}`);
         input.setAttribute('type', 'submit');
-        input.setAttribute('value', 'Launch');
-        input.onclick = function() {
-          window.location = doc.launch;
-        }
-        elt.appendChild(input);
-        document.getElementById('app-list').appendChild(elt);
+        input.setAttribute('onclick', `${action}('${appId}')`); // note that appId here is not user input, it comes from the hardcode list appIds
+        li.appendChild(input);
+        document.getElementById('app-list').appendChild(li);
       });
+      return Promise.all(promises);
     }
     async function renderLoginStatus() {
       const sessionInfo = await session.handleIncomingRedirect();
       if(sessionInfo.isLoggedIn) {
         console.log('logged in');
-        document.getElementById('logged-in').style.display='block';
-        document.getElementById('login').style.display='none';
-        document.getElementById('loginStatus').innerText += `Logged in as ${sessionInfo.webId}`;
-        return renderAppActions();
+        document.getElementById('logged-in').style = 'display: block';
+        document.getElementById('login').style = 'display: none';
+        document.getElementById('loginStatus').innerText = `Logged in as ${sessionInfo.webId}`;
+        renderAppActions();
       } else {
         console.log('logged out');
-        document.getElementById('login').style.display='block';
-        document.getElementById('logged-in').style.display='none';
+        document.getElementById('login').style = 'display: block';
+        document.getElementById('logged-in').style = 'display: none';
       }
     }
-    window.onload = async (event) => {
-      renderLoginStatus();
+    window.onload = (event) => {
+      return renderLoginStatus();
     };
   </script>
 </html>
