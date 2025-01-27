@@ -32,8 +32,7 @@
     const session = new solidClientAuthentication.Session();
     function install(appId) {
       console.log('install', appId, available[appId]);
-      const appInstaller = new AppInstaller(session);
-      appInstaller.getTypeIndexes();
+      window.appInstaller.getTypeIndexes();
     };
     function launch(appId) {
       console.log('launch', appId);
@@ -79,6 +78,10 @@
       const sessionInfo = await session.handleIncomingRedirect();
       if(sessionInfo.isLoggedIn) {
         console.log('logged in');
+        window.appInstaller = new AppInstaller({
+          fetch: session.fetch,
+          webId: sessionInfo.webId,
+        });
         document.getElementById('logged-in').style = 'display: block';
         document.getElementById('login').style = 'display: none';
         document.getElementById('loginStatus').innerText = `Logged in as ${sessionInfo.webId}`;
