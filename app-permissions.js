@@ -26,7 +26,7 @@ class AppInstaller {
     return privateTypeIndexes.concat(publicTypeIndexes).map(indexThing => indexThing['@id']);
   }
   async getRegistrations(typeIndex, rdfClass) {
-    const res = await this.fetch(this.webId, {
+    const res = await this.fetch(typeIndex, {
       'headers': {
         'Accept': 'application/ld+json'
       }
@@ -35,3 +35,7 @@ class AppInstaller {
     console.log(things);
   }
 }
+
+// const x = await session.fetch('https://asdf.pivot.pondersource.com/settings/publicTypeIndex.ttl', { headers: { Accept: 'application/ld+json' }});
+// const things = await x.json();
+// console.log(things);

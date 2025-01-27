@@ -29,6 +29,7 @@
   <script type="text/javascript" src="/solid-client-authn.bundle.js"></script>
   <script type="text/javascript" src="/app-permissions.js"></script>
   <script>
+    const CLIENT_ID = 'https://pivot.pondersource.com/clientid.jsonld';
     const session = new solidClientAuthentication.Session();
     function install(appId) {
       console.log('install', appId, available[appId]);
@@ -40,7 +41,7 @@
     };
     async function connect () {
       const params = {
-        // redirectUrl: 'https://evil.com', // window.location.origin,
+        clientId: CLIENT_ID,
         oidcIssuer: document.getElementById("oidcIssuer").value,
       };
       console.log("logging in", params);
