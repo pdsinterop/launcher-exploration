@@ -32,6 +32,8 @@
     const session = new solidClientAuthentication.Session();
     function install(appId) {
       console.log('install', appId, available[appId]);
+      const appInstaller = new AppInstaller(session);
+      appInstaller.getTypeIndexes();
     };
     function launch(appId) {
       console.log('launch', appId);
@@ -63,7 +65,7 @@
         const li = document.createElement('li');
         const input = document.createElement('input');
         let action;
-        const installed = true;
+        const installed = false;
         action = (installed ? 'launch' : 'install');
         input.setAttribute('value', `${capitalizeFirstLetter(action)} ${data.client_name}`);
         input.setAttribute('type', 'submit');
