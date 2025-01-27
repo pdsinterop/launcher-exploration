@@ -104,6 +104,7 @@ class AppInstaller {
     throw new Error('no matching matcher found');
   }
   async editAcr(webId, appId, acr) {
+    console.log('editAcr', webId, appId, acr);
     const read = await this.fetch(acr, {
       'headers': {
         'Accept': 'application/ld+json'
@@ -136,6 +137,7 @@ class AppInstaller {
     });
   }
   async installApp(appId) {
+    const rdfClass = available[appId].scopes[0]; // FIXME: support multiple scopes
     const {instances, instanceContainers } = await this.getInstancesAndContainers(rdfClass);
     const instancePromises = instances.map(instance => this.editAcr(appId, `${instance}.acr`)); // FIXME: don't make assumptions about ACR location
     const instanceContainerPromises = instanceContainers.map(instanceContainer => this.editAcr(appId, `${instanceContainer}.acr`)); // FIXME: don't make assumptions about ACR location
