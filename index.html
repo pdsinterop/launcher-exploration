@@ -6,7 +6,7 @@
   <body>
     <div id="login">
       <p>
-        Your WebID provider: <input value="https://solidcommunity.net" id="oidcIssuer" style="width: 300;">
+        Your WebID provider: <input value="https://pivot.pondersource.com" id="oidcIssuer" style="width: 300;">
         <input type="submit" value="Connect" onclick="connect();">
       </p>
     </div>
@@ -27,17 +27,15 @@
     </p>
   </body>
   <script type="text/javascript" src="/solid-client-authn.bundle.js"></script>
-  <script>    
+  <script type="text/javascript" src="/app-permissions.js"></script>
+  <script>
     const session = new solidClientAuthentication.Session();
-    const appIds = [ 
-      'https://poddit.app/clientid.jsonld',
-    ];
     function install(appId) {
-      console.log('install', appId);
+      console.log('install', appId, available[appId]);
     };
     function launch(appId) {
       console.log('launch', appId);
-      window.location = data.redirect_uris[0]; // FIXME: does this doc have some
+      window.location = available[appId].launch + `?idp=${document.getElementById('oidcIssuer').value}`; // FIXME: this field is hidden when logged in
     };
     async function connect () {
       const params = {
@@ -59,17 +57,17 @@
       console.log('rendering app actions');
       // const acr = await session.fetch('http://localhost:3000/asdf/bookmarks.acr');
       // console.log(acr);
-      const promises = appIds.map(async appId => {
+      const promises = Object.keys(available).map(async appId => {
         const res = await fetch(appId);
         const data = await res.json();
         const li = document.createElement('li');
         const input = document.createElement('input');
         let action;
-        const installed = false;
+        const installed = true;
         action = (installed ? 'launch' : 'install');
         input.setAttribute('value', `${capitalizeFirstLetter(action)} ${data.client_name}`);
         input.setAttribute('type', 'submit');
-        input.setAttribute('onclick', `${action}('${appId}')`); // note that appId here is not user input, it comes from the hardcode list appIds
+        input.setAttribute('onclick', `${action}('${appId}')`); // note that appId here is not user input, it comes hard-coded in /app-permissions.js
         li.appendChild(input);
         document.getElementById('app-list').appendChild(li);
       });

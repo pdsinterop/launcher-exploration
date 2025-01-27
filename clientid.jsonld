@@ -1,0 +1,11 @@
+{
+  "@context": ["https://www.w3.org/ns/solid/oidc-context.jsonld"],
+
+  "client_id": "https://solid.pondersource.com/clientid.jsonld",
+  "client_name": "Solid App Launcher",
+  "redirect_uris": ["https://solid.pondersource.com/"],
+  "grant_types" : ["refresh_token","authorization_code"],
+  "response_types" : ["code"],
+  "default_max_age" : 3600,
+  "require_auth_time" : true
+}
