@@ -1,6 +1,6 @@
 const available = {
   'https://poddit.app/clientid.jsonld': {
-    scopes: ['bookmarks'],
+    scopes: ['http://www.w3.org/2002/01/bookmark#Bookmark'],
     launch: 'https://poddit.app',
   }
 };
@@ -70,16 +70,72 @@ class AppInstaller {
     await Promise.all(promises);
     return { instances, instanceContainers };
   }
-  async editAcr(appId, acr) {
+  async getMatcher(webId, appId, things) {
+    for (let i = 0; i < things.length; i++) {
+      if ((Array.isArray(things[i]['@type'])) && (things[i]['@type'].indexOf('http://www.w3.org/ns/solid/acp#Matcher') !== -1)) {
+        console.log('thing is a matcher', things[i]['@id']);
+        let webIdMatch = false;
+        if (Array.isArray(things[i]['http://www.w3.org/ns/solid/acp#agent'])) {
+          for (let j = 0; j < things[i]['http://www.w3.org/ns/solid/acp#agent'].length; j++) {
+            if (things[i]['http://www.w3.org/ns/solid/acp#agent'][j]['@id'] === webId) {
+              webIdMatch = true;
+              break;
+            }
+          }
+        }
+        if (webIdMatch) {
+          console.log('thing is a matcher for the right webId', webId);
+          let clientIdMatch = false;
+          if (Array.isArray(things[i]['http://www.w3.org/ns/solid/acp#client'])) {
+            for (let j = 0; j < things[i]['http://www.w3.org/ns/solid/acp#client'].length; j++) {
+              if (things[i]['http://www.w3.org/ns/solid/acp#client'][j]['@id'] === appId) {
+                clientIdMatch = true;
+                break;
+              }
+            }
+          }
+          if (clientIdMatch) {
+            console.log('thing is a matcher for the right clientId', appId);
+            return thing['@id'];
+          }
+        }
+      }
+    }
+    throw new Error('no matching matcher found');
+  }
+  async editAcr(webId, appId, acr) {
     const read = await this.fetch(acr, {
       'headers': {
         'Accept': 'application/ld+json'
       }
     });
-    const authorizations = await read.json();
-    console.log(authorizations, `let's add ${appId} here!`);
+    const things = await read.json();
+    const matcher = this.getMatcher(webId, appId, things);
+    for (let i = 0; i < things.length; i++) {
+      if (Array.isArray(things[i]['@type']) && things[i]['@type'].indexOf('http://www.w3.org/ns/solid/acp#Policy') !== -1) {
+        if (Array.isArray(things[i]['http://www.w3.org/ns/solid/acp#anyOf'])) {
+          for (let j = 0; j < things[i]['http://www.w3.org/ns/solid/acp#anyOf'].length; j++) {
+            if (things[i]['http://www.w3.org/ns/solid/acp#anyOf'][j]['@id'] === matcher) {
+              console.log('app already has access!');
+              return;
+            }
+          }
+          things[i]['http://www.w3.org/ns/solid/acp#anyOf'].push({
+            '@id': matcher
+          });
+        }
+      }
+    }
+    console.log("Writing updated ACR", things);
+    this.fetch(acr, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/ld+json'
+      },
+      body: JSON.stringify(things, null, 2)
+    });
   }
-  async installApp(appId, rdfClass) {
+  async installApp(appId) {
     const {instances, instanceContainers } = await this.getInstancesAndContainers(rdfClass);
     const instancePromises = instances.map(instance => this.editAcr(appId, `${instance}.acr`)); // FIXME: don't make assumptions about ACR location
     const instanceContainerPromises = instanceContainers.map(instanceContainer => this.editAcr(appId, `${instanceContainer}.acr`)); // FIXME: don't make assumptions about ACR location

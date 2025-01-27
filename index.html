@@ -33,7 +33,8 @@
     const session = new solidClientAuthentication.Session();
     function install(appId) {
       console.log('install', appId, available[appId]);
-      window.appInstaller.getTypeIndexes();
+
+      window.appInstaller.installApp(appId, available[appId].scopes[0]);
     };
     function launch(appId) {
       console.log('launch', appId);
