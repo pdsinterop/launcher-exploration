@@ -1,0 +1,109 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Solid App Launcher</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css"
+    >
+  </head>
+  <body>
+    <div class="box" id="login">
+      <div class="field">
+        <label class="label">Your WebID provider:</label>
+        <input class="input" value="https://pivot.pondersource.com" id="oidcIssuer" style="width: 300;" />
+        <button class="button is-primary" onclick="connect();">Connect</button>
+      </p>
+    </div>
+    <div class="box" id="logged-in">
+      <section class="section">
+        <button class="button is-warning" onclick="disconnect();">Disconnect</button>
+        <span id="loginStatus" />
+      </section>
+      <section class="section">
+        <h1 class="title">Bookmark apps</h1>
+        <div class="grid" id ="app-list" />
+      </section>
+    </div>
+    <footer class="footer">
+      <div class="content has-text-centered">
+        <p>
+          <strong>Solid App Launcher</strong> - <a href="https://github.com/pdsinterop/launcher-exploration">Fork me on GitHub!</a>
+        </p>
+      </div>
+    </footer>
+  </body>
+  <script type="text/javascript" src="/solid-client-authn.bundle.js"></script>
+  <script type="text/javascript" src="/app-permissions.js"></script>
+  <script>
+    const CLIENT_ID = 'https://solid.pondersource.com/clientid.jsonld';
+    const session = new solidClientAuthentication.Session();
+    async function install(appId) {
+      console.log('install', appId, available[appId]);
+      await window.appInstaller.installApp(appId);
+      await renderAppActions(true);
+    };
+    function launch(appId) {
+      console.log('launch', appId);
+      window.location = available[appId].launch + `?idp=${document.getElementById('oidcIssuer').value}`; // FIXME: this field is hidden when logged in
+    }
+    async function connect () {
+      const params = {
+        clientId: CLIENT_ID,
+        oidcIssuer: document.getElementById("oidcIssuer").value,
+      };
+      console.log("logging in", params);
+      await session.login(params);
+      console.log("unreachable because of redirect?");
+    }
+    async function disconnect () {
+      await session.logout();
+      await renderLoginStatus();
+    }
+    function capitalizeFirstLetter(val) {
+      return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+    }
+    async function renderAppActions(loggedIn) {
+      console.log('rendering app actions');
+      // const acr = await session.fetch('http://localhost:3000/asdf/bookmarks.acr');
+      // console.log(acr);
+      const promises = Object.keys(available).map(async appId => {
+        const res = await fetch(appId);
+        const data = await res.json();
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        const input = document.createElement('input');
+        let action;
+        const installed = await window.appInstaller.isInstalled(appId);
+        action = (installed ? 'launch' : 'install');
+        input.setAttribute('value', `${capitalizeFirstLetter(action)} ${data.client_name}`);
+        input.setAttribute('type', 'submit');
+        input.setAttribute('onclick', `${action}('${appId}')`); // note that appId here is not user input, it comes hard-coded in /app-permissions.js
+        cell.appendChild(input);
+        document.getElementById('app-list').appendChild(cell);
+      });
+      return Promise.all(promises);
+    }
+    async function renderLoginStatus() {
+      const sessionInfo = await session.handleIncomingRedirect();
+      if(sessionInfo.isLoggedIn) {
+        console.log('logged in');
+        window.appInstaller = new AppInstaller({
+          fetch: session.fetch,
+          webId: sessionInfo.webId,
+        });
+        document.getElementById('logged-in').style = 'display: block';
+        document.getElementById('login').style = 'display: none';
+        document.getElementById('loginStatus').innerText = `Logged in as ${sessionInfo.webId}`;
+        renderAppActions();
+      } else {
+        console.log('logged out');
+        document.getElementById('login').style = 'display: block';
+        document.getElementById('logged-in').style = 'display: none';
+      }
+    }
+    window.onload = (event) => {
+      // return renderLoginStatus();
+    };
+  </script>
+</html>
