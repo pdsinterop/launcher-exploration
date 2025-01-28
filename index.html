@@ -17,12 +17,15 @@
     </div>
     <div class="box" id="logged-in">
       <section class="section">
-        <button class="button is-warning" onclick="disconnect();">Disconnect</button>
+        <button class="button is-danger" onclick="disconnect();">Disconnect</button>
         <span id="loginStatus" />
       </section>
       <section class="section">
         <h1 class="title">Bookmark apps</h1>
-        <div class="grid" id ="app-list" />
+        <div class="grid" id ="grid">
+          <div class="cell">
+            <!-- <button class="button is-info">Install Poddit</button> -->
+          </div>
       </section>
     </div>
     <footer class="footer">
@@ -63,6 +66,19 @@
     function capitalizeFirstLetter(val) {
       return String(val).charAt(0).toUpperCase() + String(val).slice(1);
     }
+    function addButton(appId, isInstalled, clientName) {
+      const cell = document.createElement('div');
+      cell.classList.add('cell');
+      const button = document.createElement('button');
+      button.classList.add('button');
+      let action;
+      action = (isInstalled ? 'launch' : 'install');
+      button.classList.add(isInstalled? 'is-link' : 'is-info');
+      button.innerText = `${capitalizeFirstLetter(action)} ${clientName}`;
+      button.setAttribute('onclick', `${action}('${appId}')`); // note that appId here is not user input, it comes hard-coded in /app-permissions.js
+      cell.appendChild(button);
+      document.getElementById('grid').appendChild(cell);
+    }
     async function renderAppActions(loggedIn) {
       console.log('rendering app actions');
       // const acr = await session.fetch('http://localhost:3000/asdf/bookmarks.acr');
@@ -70,17 +86,8 @@
       const promises = Object.keys(available).map(async appId => {
         const res = await fetch(appId);
         const data = await res.json();
-        const cell = document.createElement('div');
-        cell.classList.add('cell');
-        const input = document.createElement('input');
-        let action;
-        const installed = await window.appInstaller.isInstalled(appId);
-        action = (installed ? 'launch' : 'install');
-        input.setAttribute('value', `${capitalizeFirstLetter(action)} ${data.client_name}`);
-        input.setAttribute('type', 'submit');
-        input.setAttribute('onclick', `${action}('${appId}')`); // note that appId here is not user input, it comes hard-coded in /app-permissions.js
-        cell.appendChild(input);
-        document.getElementById('app-list').appendChild(cell);
+        const isInstalled = await window.appInstaller.isInstalled(appId);
+        addButton(appId, isInstalled, data.client_name);
       });
       return Promise.all(promises);
     }
@@ -103,7 +110,7 @@
       }
     }
     window.onload = (event) => {
-      // return renderLoginStatus();
+      return renderLoginStatus();
     };
   </script>
 </html>
