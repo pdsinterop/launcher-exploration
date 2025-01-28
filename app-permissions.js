@@ -81,21 +81,23 @@ class AppInstaller {
     await Promise.all(promises);
     return { instances, instanceContainers };
   }
-  async getMatcher(webId, appId, things) {
+  async getMatcher(appId, acr) {
+    await this.ensureDoc(acr);
+    const things = this.things[acr];
     for (let i = 0; i < things.length; i++) {
       if ((Array.isArray(things[i]['@type'])) && (things[i]['@type'].indexOf('http://www.w3.org/ns/solid/acp#Matcher') !== -1)) {
         console.log('thing is a matcher', things[i]['@id']);
         let webIdMatch = false;
         if (Array.isArray(things[i]['http://www.w3.org/ns/solid/acp#agent'])) {
           for (let j = 0; j < things[i]['http://www.w3.org/ns/solid/acp#agent'].length; j++) {
-            if (things[i]['http://www.w3.org/ns/solid/acp#agent'][j]['@id'] === webId) {
+            if (things[i]['http://www.w3.org/ns/solid/acp#agent'][j]['@id'] === this.webId) {
               webIdMatch = true;
               break;
             }
           }
         }
         if (webIdMatch) {
-          console.log('thing is a matcher for the right webId', webId);
+          console.log('thing is a matcher for the right webId', this.webId);
           let clientIdMatch = false;
           if (Array.isArray(things[i]['http://www.w3.org/ns/solid/acp#client'])) {
             for (let j = 0; j < things[i]['http://www.w3.org/ns/solid/acp#client'].length; j++) {
@@ -114,11 +116,9 @@ class AppInstaller {
     }
     throw new Error('no matching matcher found');
   }
-  async editAcr(webId, appId, acr) {
-    console.log('editAcr', webId, appId, acr);
-    this.ensureDoc(acr);
-    const things = this.things[acr];
-    const matcher = this.getMatcher(webId, appId, things);
+  async editAcr(appId, acr) {
+    console.log('editAcr', appId, acr);
+    const matcher = this.getMatcher(appId, acr);
     for (let i = 0; i < things.length; i++) {
       if (Array.isArray(things[i]['@type']) && things[i]['@type'].indexOf('http://www.w3.org/ns/solid/acp#Policy') !== -1) {
         if (Array.isArray(things[i]['http://www.w3.org/ns/solid/acp#anyOf'])) {

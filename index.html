@@ -34,7 +34,7 @@
     function install(appId) {
       console.log('install', appId, available[appId]);
 
-      window.appInstaller.installApp(appId, available[appId].scopes[0]);
+      window.appInstaller.installApp(appId);
     };
     function launch(appId) {
       console.log('launch', appId);
