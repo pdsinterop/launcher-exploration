@@ -41,9 +41,16 @@
   <script>
     const CLIENT_ID = 'https://solid.pondersource.com/clientid.jsonld';
     const session = new solidClientAuthentication.Session();
+    function emptyGrid() {
+      const element = document.getElementById('grid');
+      while (element.firstChild) {
+        element.removeChild(element.firstChild);
+      }
+    }
     async function install(appId) {
       console.log('install', appId, available[appId]);
       await window.appInstaller.installApp(appId);
+      await emptyGrid();
       await renderAppActions(true);
     };
     function launch(appId) {
