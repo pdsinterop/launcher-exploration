@@ -109,7 +109,7 @@ class AppInstaller {
           }
           if (clientIdMatch) {
             console.log('thing is a matcher for the right clientId', appId);
-            return thing['@id'];
+            return this.things[acr][i]['@id'];
           }
         }
       }
@@ -119,6 +119,8 @@ class AppInstaller {
   async acrNeedsEditing(appId, acr, fix = false) {
     console.log('editAcr', appId, acr);
     const matcher = this.getMatcher(appId, acr);
+    // await this.ensureDoc(acr);
+    const things = this.things[acr];
     for (let i = 0; i < things.length; i++) {
       if (Array.isArray(things[i]['@type']) && things[i]['@type'].indexOf('http://www.w3.org/ns/solid/acp#Policy') !== -1) {
         if (Array.isArray(things[i]['http://www.w3.org/ns/solid/acp#anyOf'])) {
