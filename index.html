@@ -31,15 +31,15 @@
   <script>
     const CLIENT_ID = 'https://solid.pondersource.com/clientid.jsonld';
     const session = new solidClientAuthentication.Session();
-    function install(appId) {
+    async function install(appId) {
       console.log('install', appId, available[appId]);
-
-      window.appInstaller.installApp(appId);
+      await window.appInstaller.installApp(appId);
+      await renderAppActions(true);
     };
     function launch(appId) {
       console.log('launch', appId);
       window.location = available[appId].launch + `?idp=${document.getElementById('oidcIssuer').value}`; // FIXME: this field is hidden when logged in
-    };
+    }
     async function connect () {
       const params = {
         clientId: CLIENT_ID,
