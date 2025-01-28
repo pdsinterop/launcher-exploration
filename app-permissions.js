@@ -118,7 +118,7 @@ class AppInstaller {
   }
   async acrNeedsEditing(appId, acr, fix = false) {
     console.log('checking ACR', appId, acr);
-    const matcher = this.getMatcher(appId, acr);
+    const matcher = await this.getMatcher(appId, acr);
     if (typeof matcher !== 'string') {
       throw new Error('why is matcher not a string?');
     }
