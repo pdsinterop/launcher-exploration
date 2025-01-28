@@ -66,7 +66,7 @@
         const li = document.createElement('li');
         const input = document.createElement('input');
         let action;
-        const installed = false;
+        const installed = await window.appInstaller.isInstalled(appId);
         action = (installed ? 'launch' : 'install');
         input.setAttribute('value', `${capitalizeFirstLetter(action)} ${data.client_name}`);
         input.setAttribute('type', 'submit');

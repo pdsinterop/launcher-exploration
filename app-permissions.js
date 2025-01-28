@@ -152,10 +152,13 @@ class AppInstaller {
     const promises = instances.map(async instance => {
       const acrUrl = `${instance}.acr`; // FIXME: don't make assumptions about ACR location
       if (this.acrNeedsEditing(appId, acrUrl, fix)) {
+        console.log('ACR not OK', acrUrl);
         ok = false;
+      } else {
+        console.log('ACR is OK', acrUrl);
       }
     });
-    await Promise.all(instancePromises);
+    await Promise.all(promises);
     return ok;
   }
   async installApp(appId) {
