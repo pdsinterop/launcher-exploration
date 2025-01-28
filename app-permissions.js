@@ -131,7 +131,7 @@ class AppInstaller {
           console.log('policy found!', things[i]['@id']);
           for (let j = 0; j < things[i]['http://www.w3.org/ns/solid/acp#anyOf'].length; j++) {
             if (things[i]['http://www.w3.org/ns/solid/acp#anyOf'][j]['@id'] === matcher) {
-              console.log('app already has access!');
+              console.log('app already has access!', acr);
               return false;
             }
           }
@@ -156,7 +156,7 @@ class AppInstaller {
     const instances = await this.getInstancesAndContainers(rdfClass);
     const promises = instances.map(async instance => {
       const acrUrl = `${instance}.acr`; // FIXME: don't make assumptions about ACR location
-      if (this.acrNeedsEditing(appId, acrUrl, fix)) {
+      if (await this.acrNeedsEditing(appId, acrUrl, fix)) {
         console.log('ACR not OK', acrUrl);
         ok = false;
       } else {
