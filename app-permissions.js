@@ -9,15 +9,31 @@ class AppInstaller {
   constructor({ fetch, webId }) {
     this.fetch = fetch;
     this.webId = webId;
+    this.things = {};
+    this.registrations = {};
+  }
+  async ensureDoc(url) {
+    if (typeof this.things[url] === 'undefined')  {
+      const res = await this.fetch(url, {
+        'headers': {
+          'Accept': 'application/ld+json'
+        }
+      });
+      this.things[url] = await res.json();
+    }
+  }
+  async putBack(url) {
+    this.fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/ld+json'
+      },
+      body: JSON.stringify(this.things[url], null, 2)
+    });
   }
   async getTypeIndexes() {
-    const res = await this.fetch(this.webId, {
-      'headers': {
-        'Accept': 'application/ld+json'
-      }
-    });
-    const things = await res.json();
-    const person = things.filter(x => { console.log(x); return (x['@type'].indexOf('http://xmlns.com/foaf/0.1/Person') !== -1); });
+    await this.ensureDoc(this.webId);
+    const person = this.things[this.webId].filter(x => { console.log(x); return (x['@type'].indexOf('http://xmlns.com/foaf/0.1/Person') !== -1); });
     if (person.length !== 1) {
       throw new Error('Unexpexted RDF in WebID Profile Document - not one Person');
     }
@@ -26,13 +42,8 @@ class AppInstaller {
     return privateTypeIndexes.concat(publicTypeIndexes).map(indexThing => indexThing['@id']);
   }
   async getRegistrations(typeIndex, rdfClass) {
-    const res = await this.fetch(typeIndex, {
-      'headers': {
-        'Accept': 'application/ld+json'
-      }
-    });
-    const things = await res.json();
-    const typeRegistrations = things.filter(x => (x['@type'].indexOf('http://www.w3.org/ns/solid/terms#TypeRegistration') !== -1));
+    await this.ensureDoc(typeIndex);
+    const typeRegistrations = this.things[typeIndex].filter(x => (x['@type'].indexOf('http://www.w3.org/ns/solid/terms#TypeRegistration') !== -1));
     const matching = typeRegistrations.filter(x => {
       const classes = x['http://www.w3.org/ns/solid/terms#forClass'];
       for (let i = 0; i < classes.length; i++) {
@@ -105,12 +116,8 @@ class AppInstaller {
   }
   async editAcr(webId, appId, acr) {
     console.log('editAcr', webId, appId, acr);
-    const read = await this.fetch(acr, {
-      'headers': {
-        'Accept': 'application/ld+json'
-      }
-    });
-    const things = await read.json();
+    this.ensureDoc(acr);
+    const things = this.things[acr];
     const matcher = this.getMatcher(webId, appId, things);
     for (let i = 0; i < things.length; i++) {
       if (Array.isArray(things[i]['@type']) && things[i]['@type'].indexOf('http://www.w3.org/ns/solid/acp#Policy') !== -1) {
@@ -128,13 +135,8 @@ class AppInstaller {
       }
     }
     console.log("Writing updated ACR", things);
-    this.fetch(acr, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/ld+json'
-      },
-      body: JSON.stringify(things, null, 2)
-    });
+    this.things[acr] = things;
+    this.putBack(acr);
   }
   async installApp(appId) {
     const rdfClass = available[appId].scopes[0]; // FIXME: support multiple scopes
