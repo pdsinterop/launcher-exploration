@@ -2,29 +2,36 @@
   <head>
     <meta charset="utf-8">
     <title>Solid App Launcher</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css"
+    >
   </head>
   <body>
-    <div id="login">
-      <p>
-        Your WebID provider: <input value="https://pivot.pondersource.com" id="oidcIssuer" style="width: 300;">
-        <input type="submit" value="Connect" onclick="connect();">
+    <div class="box" id="login">
+      <div class="field">
+        <label class="label">Your WebID provider:</label>
+        <input class="input" value="https://pivot.pondersource.com" id="oidcIssuer" style="width: 300;" />
+        <button class="button is-primary" onclick="connect();">Connect</button>
       </p>
     </div>
-    <div id="logged-in">
-      <p>
-        <input type="submit" value="Disconnect" onclick="disconnect();" />
+    <div class="box" id="logged-in">
+      <section class="section">
+        <button class="button is-warning" onclick="disconnect();">Disconnect</button>
         <span id="loginStatus" />
-      </p>
-      <div>
-        <h2>Bookmark apps</h2>
+      </section>
+      <section class="section">
+        <h1 class="title">Bookmark apps</h1>
+        <div class="grid" id ="app-list" />
+      </section>
+    </div>
+    <footer class="footer">
+      <div class="content has-text-centered">
         <p>
-          <ul id ="app-list" />
+          <strong>Solid App Launcher</strong> - <a href="https://github.com/pdsinterop/launcher-exploration">Fork me on GitHub!</a>
         </p>
       </div>
-    </div>
-    <p>
-      <a href="https://github.com/pdsinterop/launcher-exploration">Fork me on GitHub!</a>
-    </p>
+    </footer>
   </body>
   <script type="text/javascript" src="/solid-client-authn.bundle.js"></script>
   <script type="text/javascript" src="/app-permissions.js"></script>
@@ -63,7 +70,8 @@
       const promises = Object.keys(available).map(async appId => {
         const res = await fetch(appId);
         const data = await res.json();
-        const li = document.createElement('li');
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
         const input = document.createElement('input');
         let action;
         const installed = await window.appInstaller.isInstalled(appId);
@@ -71,8 +79,8 @@
         input.setAttribute('value', `${capitalizeFirstLetter(action)} ${data.client_name}`);
         input.setAttribute('type', 'submit');
         input.setAttribute('onclick', `${action}('${appId}')`); // note that appId here is not user input, it comes hard-coded in /app-permissions.js
-        li.appendChild(input);
-        document.getElementById('app-list').appendChild(li);
+        cell.appendChild(input);
+        document.getElementById('app-list').appendChild(cell);
       });
       return Promise.all(promises);
     }
@@ -95,7 +103,7 @@
       }
     }
     window.onload = (event) => {
-      return renderLoginStatus();
+      // return renderLoginStatus();
     };
   </script>
 </html>
