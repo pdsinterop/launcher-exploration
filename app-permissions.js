@@ -79,7 +79,7 @@ class AppInstaller {
       instanceContainers = instances.concat(result.instanceContainers);
     });
     await Promise.all(promises);
-    return { instances, instanceContainers };
+    return instances.concat(instanceContainers);
   }
   async getMatcher(appId, acr) {
     await this.ensureDoc(acr);
@@ -116,7 +116,7 @@ class AppInstaller {
     }
     throw new Error('no matching matcher found');
   }
-  async editAcr(appId, acr) {
+  async acrNeedsEditing(appId, acr, fix = false) {
     console.log('editAcr', appId, acr);
     const matcher = this.getMatcher(appId, acr);
     for (let i = 0; i < things.length; i++) {
@@ -125,25 +125,39 @@ class AppInstaller {
           for (let j = 0; j < things[i]['http://www.w3.org/ns/solid/acp#anyOf'].length; j++) {
             if (things[i]['http://www.w3.org/ns/solid/acp#anyOf'][j]['@id'] === matcher) {
               console.log('app already has access!');
-              return;
+              return false;
             }
           }
-          things[i]['http://www.w3.org/ns/solid/acp#anyOf'].push({
-            '@id': matcher
-          });
+          if (fix) {
+            things[i]['http://www.w3.org/ns/solid/acp#anyOf'].push({
+              '@id': matcher
+            });
+          }
         }
       }
     }
-    console.log("Writing updated ACR", things);
-    this.things[acr] = things;
-    this.putBack(acr);
+    if (fix) {
+      console.log("Writing updated ACR", things);
+      this.things[acr] = things;
+      this.putBack(acr);
+    }
+    return true;
+  }
+  async isInstalled(appId, fix = false) {
+    let ok = true;
+    const rdfClass = available[appId].scopes[0]; // FIXME: support multiple scopes
+    const instances = await this.getInstancesAndContainers(rdfClass);
+    const promises = instances.map(async instance => {
+      const acrUrl = `${instance}.acr`; // FIXME: don't make assumptions about ACR location
+      if (this.acrNeedsEditing(appId, acrUrl, fix)) {
+        ok = false;
+      }
+    });
+    await Promise.all(instancePromises);
+    return ok;
   }
   async installApp(appId) {
-    const rdfClass = available[appId].scopes[0]; // FIXME: support multiple scopes
-    const {instances, instanceContainers } = await this.getInstancesAndContainers(rdfClass);
-    const instancePromises = instances.map(instance => this.editAcr(appId, `${instance}.acr`)); // FIXME: don't make assumptions about ACR location
-    const instanceContainerPromises = instanceContainers.map(instanceContainer => this.editAcr(appId, `${instanceContainer}.acr`)); // FIXME: don't make assumptions about ACR location
-    await Promise.all(instancePromises.concat(instanceContainerPromises));
+    await this.isInstalled(appId, true);
   }
 }
 
