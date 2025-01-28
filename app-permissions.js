@@ -109,7 +109,7 @@ class AppInstaller {
           }
           if (clientIdMatch) {
             console.log('thing is a matcher for the right clientId', appId);
-            return this.things[acr][i]['@id'];
+            return things[i]['@id'];
           }
         }
       }
@@ -117,13 +117,18 @@ class AppInstaller {
     throw new Error('no matching matcher found');
   }
   async acrNeedsEditing(appId, acr, fix = false) {
-    console.log('editAcr', appId, acr);
+    console.log('checking ACR', appId, acr);
     const matcher = this.getMatcher(appId, acr);
+    if (typeof matcher !== 'string') {
+      throw new Error('why is matcher not a string?');
+    }
     // await this.ensureDoc(acr);
+    console.log('matcher found! now let\'s find the policy', matcher, this.things, acr);
     const things = this.things[acr];
     for (let i = 0; i < things.length; i++) {
       if (Array.isArray(things[i]['@type']) && things[i]['@type'].indexOf('http://www.w3.org/ns/solid/acp#Policy') !== -1) {
         if (Array.isArray(things[i]['http://www.w3.org/ns/solid/acp#anyOf'])) {
+          console.log('policy found!', things[i]['@id']);
           for (let j = 0; j < things[i]['http://www.w3.org/ns/solid/acp#anyOf'].length; j++) {
             if (things[i]['http://www.w3.org/ns/solid/acp#anyOf'][j]['@id'] === matcher) {
               console.log('app already has access!');
