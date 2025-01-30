@@ -9,7 +9,7 @@ const available = {
   },
   'https://sosobo.5apps.com/clientid.jsonld': {
     scopes: ['http://www.w3.org/2002/01/bookmark#Bookmark'],
-    launch: 'https://sosobo.5apps.com',
+    launch: 'http://localhost:5173',
   }
 };
 
