@@ -102,7 +102,9 @@
       return Promise.all(promises);
     }
     async function renderLoginStatus() {
-      const sessionInfo = await session.handleIncomingRedirect();
+      const sessionInfo = await session.handleIncomingRedirect({
+        restorePreviousSession: true,
+      });
       if(sessionInfo.isLoggedIn) {
         console.log('logged in');
         window.appInstaller = new AppInstaller({
