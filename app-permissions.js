@@ -105,7 +105,7 @@ class AppInstaller {
           }
         }
         if (webIdMatch) {
-          console.log('thing is a matcher for the right webId', this.webId);
+          // console.log('thing is a matcher for the right webId', this.webId);
           let clientIdMatch = false;
           if (Array.isArray(things[i]['http://www.w3.org/ns/solid/acp#client'])) {
             for (let j = 0; j < things[i]['http://www.w3.org/ns/solid/acp#client'].length; j++) {
@@ -122,7 +122,7 @@ class AppInstaller {
         }
       }
     }
-    throw new Error('no matching matcher found');
+    throw new Error(`no matching matcher found for ${appId} on ${acr}`);
   }
   async acrNeedsEditing(appId, acr, fix = false) {
     // console.log('checking ACR', appId, acr);
@@ -131,7 +131,7 @@ class AppInstaller {
       throw new Error('why is matcher not a string?');
     }
     // await this.ensureDoc(acr);
-    console.log('matcher found! now let\'s find the policy', matcher, this.things, acr);
+    // console.log('matcher found! now let\'s find the policy', matcher, this.things, acr);
     const things = this.things[acr];
     for (let i = 0; i < things.length; i++) {
       if (Array.isArray(things[i]['@type']) && things[i]['@type'].indexOf('http://www.w3.org/ns/solid/acp#Policy') !== -1) {
