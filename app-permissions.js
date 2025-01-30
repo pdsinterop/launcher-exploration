@@ -2,6 +2,10 @@ const available = {
   'https://poddit.app/clientid.jsonld': {
     scopes: ['http://www.w3.org/2002/01/bookmark#Bookmark'],
     launch: 'https://poddit.app',
+  },
+  'https://markbook.5apps.com/clientid.jsonld': {
+    scopes: ['http://www.w3.org/2002/01/bookmark#Bookmark'],
+    launch: 'https://markbook.5apps.com',
   }
 };
 
