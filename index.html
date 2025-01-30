@@ -85,10 +85,11 @@
       button.innerText = `${capitalizeFirstLetter(action)} ${clientName}`;
       button.setAttribute('onclick', `${action}('${appId}')`); // note that appId here is not user input, it comes hard-coded in /app-permissions.js
       cell.appendChild(button);
+      console.log('appending cell to grid', appId);
       document.getElementById('grid').appendChild(cell);
     }
     async function renderAppActions(loggedIn) {
-      console.log('rendering app actions');
+      console.log('rendering app actions', available);
       // const acr = await session.fetch('http://localhost:3000/asdf/bookmarks.acr');
       // console.log(acr);
       const promises = Object.keys(available).map(async appId => {
