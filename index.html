@@ -23,9 +23,10 @@
       <section class="section">
         <h1 class="title">Bookmark apps</h1>
         <div class="grid" id ="grid">
-          <div class="cell">
+          <!-- <div class="cell"> -->
             <!-- <button class="button is-info">Install Poddit</button> -->
-          </div>
+          <!-- </div> -->
+        </div>
       </section>
     </div>
     <footer class="footer">
@@ -93,6 +94,7 @@
       const promises = Object.keys(available).map(async appId => {
         const res = await fetch(appId);
         const data = await res.json();
+        console.log('adding app', appId);
         const isInstalled = await window.appInstaller.isInstalled(appId);
         addButton(appId, isInstalled, data.client_name);
       });
